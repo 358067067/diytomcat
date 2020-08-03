@@ -1,8 +1,15 @@
 package cn.how2j.diytomcat;
 
+import cn.how2j.diytomcat.http.Request;
+import cn.how2j.diytomcat.http.Response;
+import cn.how2j.diytomcat.util.Constant;
 import cn.how2j.diytomcat.util.MiniBrowser;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.NetUtil;
+import cn.hutool.core.util.StrUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,23 +31,48 @@ public class Bootstrap {
 
             while (true) {
                 Socket s = ss.accept();
-                InputStream is = s.getInputStream();
-                byte[] buffer = MiniBrowser.readBytes(is);
-                is.read(buffer);
-                String requestString = new String(buffer, "utf-8");
-                System.out.println("浏览器的输入信息： \r\n" + requestString);
+                Request request = new Request(s);
+                System.out.println("浏览器的输入信息： \r\n" + request.getRequestString());
+                System.out.println("uri： \r\n" + request.getUri());
 
-                OutputStream os = s.getOutputStream();
-                String response_head = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/html\r\n\r\n";
-                String responseString = "Hello DIY Tomcat from how2j.cn";
-                responseString = response_head + responseString;
-                os.write(responseString.getBytes());
-                os.flush();
-                s.close();
+                Response response = new Response();
+                String uri = request.getUri();
+                if (null == uri)
+                    continue;
+                if ("/".equals(uri)) {
+                    String html = "Hello DIY Tomcat from how2j.cn";
+                    response.getWriter().println(html);
+                } else {
+                    String fileName = StrUtil.removePrefix(uri, "/");
+                    File file = FileUtil.file(Constant.rootFolder, fileName);
+                    if (file.exists()) {
+                        String fileContent = FileUtil.readUtf8String(file);
+                        response.getWriter().println(fileContent);
+                    } else {
+                        response.getWriter().println("file not found");
+                    }
+                }
+                handle200(s, response);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    private static void handle200(Socket socket, Response response) throws IOException {
+        String contentType = response.getContentType();
+        String headText = Constant.response_head_202;
+        headText = StrUtil.format(headText, contentType);
+        byte[] head = headText.getBytes();
+
+        byte[] body = response.getBody();
+
+        byte[] responseBytes = new byte[head.length + body.length];
+        ArrayUtil.copy(head, 0, responseBytes, 0, head.length);
+        ArrayUtil.copy(body, 0, responseBytes, head.length, body.length);
+
+        OutputStream os = socket.getOutputStream();
+        os.write(responseBytes);
+        socket.close();
     }
 }
