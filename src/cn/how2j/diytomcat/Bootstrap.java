@@ -27,6 +27,7 @@ public class Bootstrap {
                 System.out.println(port + " 端口已经被占用了，排查并关闭本端口的办法请用：\r\nhttps://how2j.cn/k/tomcat/tomcat-portfix/545.html");
                 return;
             }
+
             ServerSocket ss = new ServerSocket(port);
 
             while (true) {
