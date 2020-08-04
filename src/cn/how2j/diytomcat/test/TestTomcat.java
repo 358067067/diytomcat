@@ -1,11 +1,17 @@
 package cn.how2j.diytomcat.test;
 
 import cn.how2j.diytomcat.util.MiniBrowser;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TestTomcat {
     private static int port = 18080;
@@ -38,5 +44,39 @@ public class TestTomcat {
         String url = StrUtil.format("http://{}:{}{}", ip,port,uri);
         String content = MiniBrowser.getContentString(url);
         return content;
+    }
+
+    @Test
+    public void testTimeConsumeHtml() throws InterruptedException {
+        //初始化线程池
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
+                20,
+                20,
+                60,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(10)
+        );
+        //计时器
+        TimeInterval timeInterval = DateUtil.timer();
+        //执行3次任务
+        for(int i = 0; i < 3; i++){
+            threadPool.execute(new Runnable(){
+                public void run() {
+                    getContentString("/timeConsume.html");
+                }
+            });
+        }
+
+        threadPool.shutdown();
+        threadPool.awaitTermination(1, TimeUnit.HOURS);
+        //断言是否超过3秒
+        long duration = timeInterval.intervalMs();
+        Assert.assertTrue(duration < 3000);
+    }
+
+    @Test
+    public void testaIndex() {
+        String html = getContentString("/a/index.html");
+        Assert.assertEquals(html,"Hello DIY Tomcat from index.html@a");
     }
 }
