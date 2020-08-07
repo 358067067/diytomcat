@@ -1,8 +1,7 @@
 package cn.how2j.diytomcat.util;
 
-import cn.how2j.diytomcat.catalina.Context;
-import cn.how2j.diytomcat.catalina.Engine;
-import cn.how2j.diytomcat.catalina.Host;
+import cn.how2j.diytomcat.catalina.*;
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.FileUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -56,5 +55,19 @@ public class ServerXMLUtil {
 
         Element host = d.select("Engine").first();
         return host.attr("defaultHost");
+    }
+
+    public static List<Connector> getConnectors(Service service) {
+        List<Connector> result = new ArrayList<>();
+        String xml = FileUtil.readUtf8String(Constant.serverXmlFile);
+        Document d = Jsoup.parse(xml);
+        Elements es = d.select("Connector");
+        es.forEach(e -> {
+            int port = Convert.toInt(e.attr("port"));
+            Connector c = new Connector(service);
+            c.setPort(port);
+            result.add(c);
+        });
+        return result;
     }
 }

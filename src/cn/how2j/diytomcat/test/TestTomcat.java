@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TestTomcat {
-    private static int port = 18080;
+    private static int port = 18081;
     private static String ip = "127.0.0.1";
     @BeforeClass
     public static void beforeClass() {
@@ -35,66 +35,36 @@ public class TestTomcat {
     }
 
     @Test
-    public void testaHtml() {
-        String html = getContentString("/a.html");
-        Assert.assertEquals(html,"Hello DIY Tomcat from a.html");
-    }
-
-    private String getContentString(String uri) {
-        String url = StrUtil.format("http://{}:{}{}", ip,port,uri);
-        String content = MiniBrowser.getContentString(url);
-        return content;
-    }
-
-    @Test
     public void testTimeConsumeHtml() throws InterruptedException {
-        //初始化线程池
-        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
-                20,
-                20,
-                60,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(10)
-        );
-        //计时器
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(20, 20, 60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(10));
         TimeInterval timeInterval = DateUtil.timer();
-        //执行3次任务
-        for(int i = 0; i < 3; i++){
+
+        for(int i = 0; i<3; i++){
             threadPool.execute(new Runnable(){
                 public void run() {
                     getContentString("/timeConsume.html");
                 }
             });
         }
-
         threadPool.shutdown();
         threadPool.awaitTermination(1, TimeUnit.HOURS);
-        //断言是否超过3秒
+
         long duration = timeInterval.intervalMs();
+
         Assert.assertTrue(duration < 3000);
     }
 
     @Test
     public void testaIndex() {
-        String html = getContentString("/a/index.html");
+        String html = getContentString("/a");
         Assert.assertEquals(html,"Hello DIY Tomcat from index.html@a");
     }
 
     @Test
     public void testbIndex() {
-        String html = getContentString("/b/index.html");
+        String html = getContentString("/b/");
         Assert.assertEquals(html,"Hello DIY Tomcat from index.html@b");
-    }
-
-    private String getHttpString(String uri) {
-        String url = StrUtil.format("http://{}:{}{}", ip,port,uri);
-        String http = MiniBrowser.getHttpString(url);
-        return http;
-    }
-
-    private void containAssert(String html, String string) {
-        boolean match = StrUtil.containsAny(html, string);
-        Assert.assertTrue(match);
     }
 
     @Test
@@ -102,11 +72,55 @@ public class TestTomcat {
         String response  = getHttpString("/not_exist.html");
         containAssert(response, "HTTP/1.1 404 Not Found");
     }
-
     @Test
     public void test500() {
         String response  = getHttpString("/500.html");
         containAssert(response, "HTTP/1.1 500 Internal Server Error");
     }
 
+    @Test
+    public void testaTxt() {
+        String response  = getHttpString("/a.txt");
+        containAssert(response, "Content-Type: text/plain");
+    }
+
+    @Test
+    public void testPNG() {
+        byte[] bytes = getContentBytes("/logo.png");
+        int pngFileLength = 1672;
+        Assert.assertEquals(pngFileLength, bytes.length);
+    }
+    @Test
+    public void testPDF() {
+        byte[] bytes = getContentBytes("/etf.pdf");
+        int pngFileLength = 3590775;
+        Assert.assertEquals(pngFileLength, bytes.length);
+    }
+
+    private byte[] getContentBytes(String uri) {
+        return getContentBytes(uri,false);
+    }
+    private byte[] getContentBytes(String uri,boolean gzip) {
+        String url = StrUtil.format("http://{}:{}{}", ip,port,uri);
+        return MiniBrowser.getContentBytes(url,false);
+    }
+    private String getContentString(String uri) {
+        String url = StrUtil.format("http://{}:{}{}", ip,port,uri);
+        String content = MiniBrowser.getContentString(url);
+        return content;
+    }
+    private String getHttpString(String uri) {
+        String url = StrUtil.format("http://{}:{}{}", ip,port,uri);
+        String http = MiniBrowser.getHttpString(url);
+        return http;
+    }
+    private void containAssert(String html, String string) {
+        boolean match = StrUtil.containsAny(html, string);
+        Assert.assertTrue(match);
+    }
+    @Test
+    public void testhello() {
+        String html = getContentString("/j2ee/hello");
+        Assert.assertEquals(html,"Hello DIY Tomcat from HelloServlet");
+    }
 }

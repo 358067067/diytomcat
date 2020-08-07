@@ -1,32 +1,39 @@
 package cn.how2j.diytomcat.http;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 
-public class Response {
+public class Response extends BaseResponse {
     private StringWriter stringWriter;
-    private PrintWriter printWriter;
+    private PrintWriter writer;
     private String contentType;
-
-    public Response() {
+    private byte[] body;
+    public Response(){
         this.stringWriter = new StringWriter();
-        this.printWriter = new PrintWriter(stringWriter);
+        this.writer = new PrintWriter(stringWriter);
         this.contentType = "text/html";
     }
 
     public String getContentType() {
         return contentType;
     }
-
-    public PrintWriter getWriter() {
-        return printWriter;
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
-
+    public PrintWriter getWriter() {
+        return writer;
+    }
     public byte[] getBody() throws UnsupportedEncodingException {
-        String content = stringWriter.toString();
-        byte[] body = content.getBytes("utf-8");
+        if(null==body) {
+            String content = stringWriter.toString();
+            body = content.getBytes("utf-8");
+        }
         return body;
     }
+
+    public void setBody(byte[] body) {
+        this.body = body;
+    }
+
 }

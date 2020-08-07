@@ -5,6 +5,9 @@ import cn.how2j.diytomcat.http.Response;
 import cn.how2j.diytomcat.util.Constant;
 import cn.how2j.diytomcat.util.ServerXMLUtil;
 import cn.how2j.diytomcat.util.ThreadPoolUtil;
+import cn.how2j.diytomcat.util.WebXMLUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -17,10 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Server {
 
@@ -31,85 +31,14 @@ public class Server {
     }
 
     public void start() {
+        TimeInterval timeInterval = DateUtil.timer();
         logJVM();
         init();
+        LogFactory.get().info("Server startup in {} ms",timeInterval.intervalMs());
     }
 
     private void init() {
-        try {
-            int port = 18080;
-            ServerSocket ss = new ServerSocket(port);
-
-            while (true) {
-                Socket s = ss.accept();
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Request request = new Request(s, service);
-                            Response response = new Response();
-                            String uri = request.getUri();
-                            if (null == uri)
-                                return;
-                            System.out.println("uri:"+uri);
-                            Context context = request.getContext();
-                            if("/500.html".equals(uri)){
-                                throw new RuntimeException("this is a deliberately created exception");
-                            }
-                            if ("/".equals(uri)) {
-                                String html = "Hello DIY Tomcat from how2j.cn";
-                                response.getWriter().println(html);
-                            } else {
-                                String fileName = StrUtil.removePrefix(uri, "/");
-                                File file = FileUtil.file(context.getDocBase(), fileName);
-                                if (file.exists()) {
-                                    String fileContent = FileUtil.readUtf8String(file);
-                                    response.getWriter().println(fileContent);
-
-                                    if (fileName.equals("timeConsume.html")) {
-                                        ThreadUtil.sleep(1000);
-                                    }
-                                } else {
-                                    handle404(s, uri);
-                                    return;
-                                }
-                            }
-                            handle200(s, response);
-                        } catch (Exception e) {
-                            LogFactory.get().error(e);
-                            handle500(s,e);
-                        } finally {
-                            try {
-                            if (!s.isClosed())
-                                s.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                };
-                ThreadPoolUtil.run(r);
-            }
-        } catch (IOException e) {
-            LogFactory.get().error(e);
-            e.printStackTrace();
-        }
-    }
-
-    private static void handle200(Socket socket, Response response) throws IOException {
-        String contentType = response.getContentType();
-        String headText = Constant.response_head_202;
-        headText = StrUtil.format(headText, contentType);
-        byte[] head = headText.getBytes();
-
-        byte[] body = response.getBody();
-
-        byte[] responseBytes = new byte[head.length + body.length];
-        ArrayUtil.copy(head, 0, responseBytes, 0, head.length);
-        ArrayUtil.copy(body, 0, responseBytes, head.length, body.length);
-
-        OutputStream os = socket.getOutputStream();
-        os.write(responseBytes);
+        service.start();
     }
 
     private static void logJVM() {
@@ -125,40 +54,7 @@ public class Server {
         infos.put("JVM Vendor", SystemUtil.get("java.vm.specification.vendor"));
 
         infos.forEach((key, value) -> {
-            LogFactory.get().info(key+":\t\t" + infos.get(key));
+            LogFactory.get().info(key+":\t\t" + value);
         });
-    }
-
-    protected void handle404(Socket s, String uri) throws IOException {
-        OutputStream os = s.getOutputStream();
-        String responseText = StrUtil.format(Constant.response_head_404, uri, uri);
-        responseText = Constant.response_head_404 + responseText;
-        byte[] responseByte = responseText.getBytes("utf-8");
-        os.write(responseByte);
-    }
-
-    protected void handle500(Socket s, Exception e) {
-        try {
-            OutputStream os = s.getOutputStream();
-            StackTraceElement stes[] = e.getStackTrace();
-            StringBuffer sb = new StringBuffer();
-            sb.append(e.toString());
-            sb.append("\r\n");
-            Arrays.asList(stes).forEach(ste -> {
-                sb.append("\t").append(ste.toString()).append("\r\n");
-            });
-
-            String msg = e.getMessage();
-
-            if (null != msg && msg.length() > 20)
-                msg = msg.substring(0, 19);
-
-            String text = StrUtil.format(Constant.textFormat_500, msg, e.toString(), sb.toString());
-            text = Constant.response_head_500 + text;
-            byte[] responseBytes = text.getBytes("utf-8");
-            os.write(responseBytes);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
     }
 }
