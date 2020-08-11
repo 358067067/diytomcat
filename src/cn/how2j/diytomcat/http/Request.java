@@ -19,15 +19,37 @@ public class Request extends BaseRequest {
     }
 
     private String requestString;
+    private String method;
     private String uri;
     private Socket socket;
     private Service service;
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    private int status;
+
+    private void parseMethod() {
+        method = StrUtil.subBefore(requestString, " ", false);
+    }
+
+    @Override
+    public String getMethod() {
+        return method;
+    }
+
     public Request(Socket socket, Service service) throws IOException {
         this.service = service;
         this.socket = socket;
         parseHttpRequest();
         if(StrUtil.isEmpty(requestString))
             return;
+        parseMethod();
         parseUri();
         parseContext();
         if(!"/".equals(context.getPath())){

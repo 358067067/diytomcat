@@ -2,16 +2,13 @@ package cn.how2j.diytomcat.catalina;
 
 import cn.how2j.diytomcat.http.Request;
 import cn.how2j.diytomcat.http.Response;
+import cn.how2j.diytomcat.servlets.DefaultServlet;
+import cn.how2j.diytomcat.servlets.InvokerServlet;
 import cn.how2j.diytomcat.util.Constant;
-import cn.how2j.diytomcat.util.WebXMLUtil;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.LogFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -27,48 +24,22 @@ public class HttpProcessor {
             Context context = request.getContext();
             String servletClassName = context.getServletClassName(uri);
 
-            if (null != servletClassName) {
-                Object servletObject = ReflectUtil.newInstance(servletClassName);
-                ReflectUtil.invoke(servletObject, "doGet", request, response);
-            } else {
-                if ("/500.html".equals(uri)) {
-                    throw new Exception("this is a deliberately created exception");
-                } else {
-                    if ("/".equals(uri))
-                        uri = WebXMLUtil.getWelcomeFile(request.getContext());
+            if (null != servletClassName)
+                InvokerServlet.getInstance().service(request, response);
+            else
+                DefaultServlet.getInstance().service(request, response);
 
-                    String fileName = StrUtil.removePrefix(uri, "/");
-                    File file = FileUtil.file(context.getDocBase(), fileName);
-
-                    if (file.exists()) {
-                        String extName = FileUtil.extName(file);
-                        String mimeType = WebXMLUtil.getMimeType(extName);
-                        response.setContentType(mimeType);
-
-                        byte body[] = FileUtil.readBytes(file);
-                        response.setBody(body);
-
-                        if (fileName.equals("timeConsume.html")) {
-                            ThreadUtil.sleep(1000);
-                        }
-
-                    } else {
-                        handle404(s, uri);
-                        return;
-                    }
-                }
+            if (Constant.CODE_200 == response.getStatus()) {
+                handle200(s, response);
+                return;
             }
-            handle200(s, response);
+            if (Constant.CODE_404 == response.getStatus()) {
+                handle404(s, uri);
+                return;
+            }
         } catch (Exception e) {
             LogFactory.get().error(e);
             handle500(s, e);
-        } finally {
-            try {
-                if (!s.isClosed())
-                    s.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 

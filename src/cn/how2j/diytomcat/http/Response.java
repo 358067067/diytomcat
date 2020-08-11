@@ -9,6 +9,17 @@ public class Response extends BaseResponse {
     private PrintWriter writer;
     private String contentType;
     private byte[] body;
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    private int status;
+
     public Response(){
         this.stringWriter = new StringWriter();
         this.writer = new PrintWriter(stringWriter);
