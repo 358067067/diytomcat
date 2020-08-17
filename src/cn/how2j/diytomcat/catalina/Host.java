@@ -2,6 +2,7 @@ package cn.how2j.diytomcat.catalina;
 
 import cn.how2j.diytomcat.util.Constant;
 import cn.how2j.diytomcat.util.ServerXMLUtil;
+import cn.hutool.log.LogFactory;
 
 import java.io.File;
 import java.util.Arrays;
@@ -15,9 +16,9 @@ public class Host {
     private Map<String, Context> contextMap;
     private Engine engine;
 
-    public Host(String name, Engine engine){
+    public Host(String name, Engine engine) {
         this.contextMap = new HashMap<>();
-        this.name =  name;
+        this.name = name;
         this.engine = engine;
 
         scanContextsOnWebAppsFolder();
@@ -25,22 +26,22 @@ public class Host {
 
     }
 
-    private  void scanContextsInServerXML() {
-        List<Context> contexts = ServerXMLUtil.getContexts();
+    private void scanContextsInServerXML() {
+        List<Context> contexts = ServerXMLUtil.getContexts(this);
         contexts.forEach(context -> {
             contextMap.put(context.getPath(), context);
         });
     }
 
-    private  void scanContextsOnWebAppsFolder() {
+    private void scanContextsOnWebAppsFolder() {
         File[] folders = Constant.webappsFolder.listFiles();
         Arrays.asList(folders).forEach(folder -> {
             if (folder.isDirectory())
-            loadContext(folder);
+                loadContext(folder);
         });
     }
 
-    private  void loadContext(File folder) {
+    private void loadContext(File folder) {
         String path = folder.getName();
         if ("ROOT".equals(path))
             path = "/";
@@ -48,7 +49,7 @@ public class Host {
             path = "/" + path;
 
         String docBase = folder.getAbsolutePath();
-        Context context = new Context(path,docBase);
+        Context context = new Context(path, docBase, this, true);
 
         contextMap.put(context.getPath(), context);
     }
@@ -63,5 +64,21 @@ public class Host {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void reload(Context context) {
+        LogFactory.get().info("Reloading Context with name [{}] has started", context.getPath());
+        String path = context.getPath();
+        String docBase = context.getDocBase();
+        boolean reloadable = context.isReloadable();
+        // stop
+        context.stop();
+        // remove
+        contextMap.remove(path);
+        // allocate new context
+        Context newContext = new Context(path, docBase, this, reloadable);
+        // assign it to map
+        contextMap.put(newContext.getPath(), newContext);
+        LogFactory.get().info("Reloading Context with name [{}] has completed", context.getPath());
     }
 }

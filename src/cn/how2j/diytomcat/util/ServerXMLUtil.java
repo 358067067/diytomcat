@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ServerXMLUtil {
 
-    public static List<Context> getContexts() {
+    public static List<Context> getContexts(Host host) {
         List<Context> result = new ArrayList<>();
 
         String xml = FileUtil.readUtf8String(Constant.serverXmlFile);
@@ -23,7 +23,8 @@ public class ServerXMLUtil {
         Elements es = doc.select("Context");
 
         es.forEach(e -> {
-            Context context = new Context(e.attr("path"), e.attr("docBase"));
+            boolean reloadable = Convert.toBool(e.attr("reloadable"), true);
+            Context context = new Context(e.attr("path"), e.attr("docBase"), host, reloadable);
             result.add(context);
         });
         return result;

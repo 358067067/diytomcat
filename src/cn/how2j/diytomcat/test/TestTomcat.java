@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TestTomcat {
-    private static int port = 18081;
+    private static int port = 18080;
     private static String ip = "127.0.0.1";
     @BeforeClass
     public static void beforeClass() {
@@ -97,6 +97,18 @@ public class TestTomcat {
         Assert.assertEquals(pngFileLength, bytes.length);
     }
 
+    @Test
+    public void testhello() {
+        String html = getContentString("/j2ee/hello");
+        Assert.assertEquals(html,"Hello DIY Tomcat from HelloServlet");
+    }
+
+    @Test
+    public void testJavawebHello() {
+        String html = getContentString("/javaweb/hello");
+        Assert.assertEquals(html,"Hello DIY Tomcat from HelloServlet@javaweb");
+    }
+
     private byte[] getContentBytes(String uri) {
         return getContentBytes(uri,false);
     }
@@ -117,10 +129,5 @@ public class TestTomcat {
     private void containAssert(String html, String string) {
         boolean match = StrUtil.containsAny(html, string);
         Assert.assertTrue(match);
-    }
-    @Test
-    public void testhello() {
-        String html = getContentString("/j2ee/hello");
-        Assert.assertEquals(html,"Hello DIY Tomcat from HelloServlet");
     }
 }
