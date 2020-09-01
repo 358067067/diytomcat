@@ -6,6 +6,7 @@ import cn.how2j.diytomcat.catalina.Service;
 import cn.how2j.diytomcat.util.MiniBrowser;
 import cn.hutool.core.util.StrUtil;
 
+import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -16,6 +17,14 @@ public class Request extends BaseRequest {
 
     public Context getContext() {
         return context;
+    }
+
+    public ServletContext getServletContext() {
+        return context.getServletContext();
+    }
+
+    public String getRealPath(String path) {
+        return getServletContext().getRealPath(path);
     }
 
     private String requestString;
@@ -47,14 +56,14 @@ public class Request extends BaseRequest {
         this.service = service;
         this.socket = socket;
         parseHttpRequest();
-        if(StrUtil.isEmpty(requestString))
+        if (StrUtil.isEmpty(requestString))
             return;
         parseMethod();
         parseUri();
         parseContext();
-        if(!"/".equals(context.getPath())){
+        if (!"/".equals(context.getPath())) {
             uri = StrUtil.removePrefix(uri, context.getPath());
-            if(StrUtil.isEmpty(uri))
+            if (StrUtil.isEmpty(uri))
                 uri = "/";
         }
     }
@@ -62,7 +71,7 @@ public class Request extends BaseRequest {
     private void parseContext() {
         Engine engine = service.getEngine();
         context = engine.getDefaultHost().getContext(uri);
-        if(null != context)
+        if (null != context)
             return;
         String path = StrUtil.subBetween(uri, "/", "/");
         if (null == path)
@@ -96,7 +105,7 @@ public class Request extends BaseRequest {
         return uri;
     }
 
-    public String getRequestString(){
+    public String getRequestString() {
         return requestString;
     }
 }

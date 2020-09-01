@@ -2,6 +2,7 @@ package cn.how2j.diytomcat.catalina;
 
 import cn.how2j.diytomcat.classloader.WebappClassLoader;
 import cn.how2j.diytomcat.exception.WebConfigDuplicatedException;
+import cn.how2j.diytomcat.http.ApplicationContext;
 import cn.how2j.diytomcat.util.ContextXMLUtil;
 import cn.how2j.diytomcat.watcher.ContextFileChangeWatcher;
 import cn.hutool.core.date.DateUtil;
@@ -14,6 +15,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.servlet.ServletContext;
 import java.io.File;
 import java.util.*;
 
@@ -33,6 +35,7 @@ public class Context {
     private boolean reloadable;
     private ContextFileChangeWatcher contextFileChangeWatcher;
 
+    private ServletContext servletContext;
     public Context(String path, String docBase, Host host, boolean reloadable) {
         TimeInterval timeInterval = DateUtil.timer();
         this.host = host;
@@ -49,6 +52,8 @@ public class Context {
 
         ClassLoader commonClassLoader = Thread.currentThread().getContextClassLoader();
         this.webappClassLoader = new WebappClassLoader(docBase, commonClassLoader);
+
+        this.servletContext = new ApplicationContext(this);
 
         LogFactory.get().info("Deploying web application directory {}", this.docBase);
         deploy();
@@ -137,6 +142,10 @@ public class Context {
         checkDuplicated(d, "servlet-mapping url-pattern", "servlet url 重复,请保持其唯一性:{} ");
         checkDuplicated(d, "servlet servlet-name", "servlet 名称重复,请保持其唯一性:{} ");
         checkDuplicated(d, "servlet servlet-class", "servlet 类名重复,请保持其唯一性:{} ");
+    }
+
+    public ServletContext getServletContext() {
+        return servletContext;
     }
 
     public String getServletClassName(String uri) {
