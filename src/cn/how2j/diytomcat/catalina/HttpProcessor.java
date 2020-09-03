@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public class HttpProcessor {
-    public void excute(Socket s, Request request, Response response) {
+    public void execute(Socket s, Request request, Response response) {
         try {
             String uri = request.getUri();
             if (null == uri)

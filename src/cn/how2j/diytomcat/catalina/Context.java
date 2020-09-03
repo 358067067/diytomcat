@@ -3,6 +3,7 @@ package cn.how2j.diytomcat.catalina;
 import cn.how2j.diytomcat.classloader.WebappClassLoader;
 import cn.how2j.diytomcat.exception.WebConfigDuplicatedException;
 import cn.how2j.diytomcat.http.ApplicationContext;
+import cn.how2j.diytomcat.http.StandardServletConfig;
 import cn.how2j.diytomcat.util.ContextXMLUtil;
 import cn.how2j.diytomcat.watcher.ContextFileChangeWatcher;
 import cn.hutool.core.date.DateUtil;
@@ -15,7 +16,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import java.io.File;
 import java.util.*;
 
@@ -28,6 +32,8 @@ public class Context {
     private Map<String, String> url_ServletName;
     private Map<String, String> servletName_className;
     private Map<String, String> className_servletName;
+    private Map<String, Map<String, String>> servlet_className_init_params;
+    private List<String> loadOnStartupServletClassNames;
 
     private WebappClassLoader webappClassLoader;
 
@@ -36,6 +42,8 @@ public class Context {
     private ContextFileChangeWatcher contextFileChangeWatcher;
 
     private ServletContext servletContext;
+    private Map<Class<?>, HttpServlet> servletPool;
+
     public Context(String path, String docBase, Host host, boolean reloadable) {
         TimeInterval timeInterval = DateUtil.timer();
         this.host = host;
@@ -49,11 +57,15 @@ public class Context {
         this.url_ServletName = new HashMap<>();
         this.servletName_className = new HashMap<>();
         this.className_servletName = new HashMap<>();
+        this.servlet_className_init_params = new HashMap<>();
+        this.loadOnStartupServletClassNames = new ArrayList<>();
+
+        this.servletContext = new ApplicationContext(this);
 
         ClassLoader commonClassLoader = Thread.currentThread().getContextClassLoader();
         this.webappClassLoader = new WebappClassLoader(docBase, commonClassLoader);
 
-        this.servletContext = new ApplicationContext(this);
+        this.servletPool = new HashMap<>();
 
         LogFactory.get().info("Deploying web application directory {}", this.docBase);
         deploy();
@@ -65,7 +77,6 @@ public class Context {
     }
 
     private void deploy() {
-        TimeInterval timeInterval = DateUtil.timer();
         init();
 
         if (reloadable) {
@@ -81,6 +92,7 @@ public class Context {
         try {
             checkDuplicated();
         } catch (WebConfigDuplicatedException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
             return;
         }
@@ -88,6 +100,11 @@ public class Context {
         String xml = FileUtil.readUtf8String(contextWebXmlFile);
         Document d = Jsoup.parse(xml);
         parseServletMapping(d);
+        parseServletInitParams(d);
+
+        parseLoadOnStartup(d);
+        handleLoadOnStartup();
+
     }
 
     private void parseServletMapping(Document d) {
@@ -144,10 +161,6 @@ public class Context {
         checkDuplicated(d, "servlet servlet-class", "servlet 类名重复,请保持其唯一性:{} ");
     }
 
-    public ServletContext getServletContext() {
-        return servletContext;
-    }
-
     public String getServletClassName(String uri) {
         return url_servletClassName.get(uri);
     }
@@ -175,6 +188,8 @@ public class Context {
     public void stop() {
         webappClassLoader.stop();
         contextFileChangeWatcher.stop();
+
+        destroyServlets();
     }
 
     public boolean isReloadable() {
@@ -183,5 +198,81 @@ public class Context {
 
     public void setReloadable(boolean reloadable) {
         this.reloadable = reloadable;
+    }
+
+    public ServletContext getServletContext() {
+        return servletContext;
+    }
+
+    public synchronized HttpServlet getServlet(Class<?> clazz)
+            throws InstantiationException, IllegalAccessException, ServletException {
+        HttpServlet servlet = servletPool.get(clazz);
+
+        if (null == servlet) {
+            servlet = (HttpServlet) clazz.newInstance();
+            ServletContext servletContext = this.getServletContext();
+
+            String className = clazz.getName();
+            String servletName = className_servletName.get(className);
+
+            Map<String, String> initParameters = servlet_className_init_params.get(className);
+            ServletConfig servletConfig = new StandardServletConfig(servletContext, servletName, initParameters);
+
+            servlet.init(servletConfig);
+            servletPool.put(clazz, servlet);
+        }
+
+        return servlet;
+    }
+
+    private void parseServletInitParams(Document d) {
+        Elements servletClassNameElements = d.select("servlet-class");
+        for (Element servletClassNameElement : servletClassNameElements) {
+            String servletClassName = servletClassNameElement.text();
+
+            Elements initElements = servletClassNameElement.parent().select("init-param");
+            if (initElements.isEmpty())
+                continue;
+
+            Map<String, String> initParams = new HashMap<>();
+
+            for (Element element : initElements) {
+                String name = element.select("param-name").get(0).text();
+                String value = element.select("param-value").get(0).text();
+                initParams.put(name, value);
+            }
+
+            servlet_className_init_params.put(servletClassName, initParams);
+
+        }
+
+//		System.out.println("class_name_init_params:" + servlet_className_init_params);
+
+    }
+
+    private void destroyServlets() {
+        Collection<HttpServlet> servlets = servletPool.values();
+        for (HttpServlet servlet : servlets) {
+            servlet.destroy();
+        }
+    }
+
+    public void parseLoadOnStartup(Document d) {
+        Elements es = d.select("load-on-startup");
+        for (Element e : es) {
+            String loadOnStartupServletClassName = e.parent().select("servlet-class").text();
+            loadOnStartupServletClassNames.add(loadOnStartupServletClassName);
+        }
+    }
+
+    public void handleLoadOnStartup() {
+        for (String loadOnStartupServletClassName : loadOnStartupServletClassNames) {
+            try {
+                Class<?> clazz = webappClassLoader.loadClass(loadOnStartupServletClassName);
+                getServlet(clazz);
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ServletException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

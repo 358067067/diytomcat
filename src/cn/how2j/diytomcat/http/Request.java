@@ -4,12 +4,18 @@ import cn.how2j.diytomcat.catalina.Context;
 import cn.how2j.diytomcat.catalina.Engine;
 import cn.how2j.diytomcat.catalina.Service;
 import cn.how2j.diytomcat.util.MiniBrowser;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 
 import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Request extends BaseRequest {
 
@@ -47,6 +53,9 @@ public class Request extends BaseRequest {
         method = StrUtil.subBefore(requestString, " ", false);
     }
 
+    private String queryString;
+    private Map<String, String[]> parameterMap;
+
     @Override
     public String getMethod() {
         return method;
@@ -55,6 +64,7 @@ public class Request extends BaseRequest {
     public Request(Socket socket, Service service) throws IOException {
         this.service = service;
         this.socket = socket;
+        this.parameterMap = new HashMap();
         parseHttpRequest();
         if (StrUtil.isEmpty(requestString))
             return;
@@ -66,6 +76,7 @@ public class Request extends BaseRequest {
             if (StrUtil.isEmpty(uri))
                 uri = "/";
         }
+        parseParameters();
     }
 
     private void parseContext() {
@@ -108,4 +119,57 @@ public class Request extends BaseRequest {
     public String getRequestString() {
         return requestString;
     }
+
+    public String getParameter(String name) {
+        String values[] = parameterMap.get(name);
+        if (null != values && 0 != values.length)
+            return values[0];
+        return null;
+    }
+
+    public Map getParameterMap() {
+        return parameterMap;
+    }
+
+    public Enumeration getParameterNames() {
+        return Collections.enumeration(parameterMap.keySet());
+    }
+
+    public String[] getParameterValues(String name) {
+        return parameterMap.get(name);
+    }
+
+    private void parseParameters() {
+        if ("GET".equals(this.getMethod())) {
+            String url = StrUtil.subBetween(requestString, " ", " ");
+            if (StrUtil.contains(url, '?')) {
+                queryString = StrUtil.subAfter(url, '?', false);
+            }
+        }
+        if ("POST".equals(this.getMethod())) {
+            queryString = StrUtil.subAfter(requestString, "\r\n\r\n", false);
+        }
+        if (null == queryString)
+            return;
+        queryString = URLUtil.decode(queryString);
+
+        String[] parameterValues = queryString.split("&");
+        if (null != parameterValues) {
+            for (String parameterValue : parameterValues) {
+                String[] nameValues = parameterValue.split("=");
+                String name = nameValues[0];
+                String value = nameValues[1];
+
+                String values[] = parameterMap.get(name);
+                if (null == values) {
+                    values = new String[] { value };
+                    parameterMap.put(name, values);
+                } else {
+                    values = ArrayUtil.append(values, value);
+                    parameterMap.put(name, values);
+                }
+            }
+        }
+    }
+
 }

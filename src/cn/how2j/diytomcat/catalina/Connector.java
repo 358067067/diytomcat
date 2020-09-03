@@ -35,10 +35,10 @@ public class Connector implements Runnable {
                     @Override
                     public void run() {
                         try {
-                            Request request = new Request(s, getService());
+                            Request request = new Request(s, service);
                             Response response = new Response();
                             HttpProcessor processor = new HttpProcessor();
-                            processor.excute(s, request, response);
+                            processor.execute(s, request, response);
                         } catch (IOException e) {
                             e.printStackTrace();
                         } finally {

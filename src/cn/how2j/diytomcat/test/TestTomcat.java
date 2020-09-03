@@ -105,8 +105,9 @@ public class TestTomcat {
 
     @Test
     public void testJavawebHello() {
-        String html = getContentString("/javaweb/hello");
-        Assert.assertEquals(html,"Hello DIY Tomcat from HelloServlet@javaweb");
+        String html1 = getContentString("/javaweb/hello");
+        String html2 = getContentString("/javaweb/hello");
+        Assert.assertEquals(html1,html2);
     }
 
     private byte[] getContentBytes(String uri) {

@@ -1,0 +1,63 @@
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deploying web application directory E:\IdeaProjects\diytomcat\webapps\a
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deployment of web application directory E:\IdeaProjects\diytomcat\webapps\a has finished in 175 ms
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deploying web application directory E:\IdeaProjects\diytomcat\webapps\j2ee
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deployment of web application directory E:\IdeaProjects\diytomcat\webapps\j2ee has finished in 9 ms
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deploying web application directory E:\IdeaProjects\diytomcat\webapps\ROOT
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deployment of web application directory E:\IdeaProjects\diytomcat\webapps\ROOT has finished in 2 ms
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deploying web application directory e:/IdeaProjects/diytomcat/b
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deployment of web application directory e:/IdeaProjects/diytomcat/b has finished in 1 ms
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deploying web application directory e:/IdeaProjects/javaweb/web
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Context <init>
+INFO : Deployment of web application directory e:/IdeaProjects/javaweb/web has finished in 4 ms
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : Server version:		How2J DiyTomcat/1.0.1
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : Server built:		2020-04-08 10:20:22
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : Server number:		1.0.1
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : OS Name	:		Windows 10
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : OS Version:		10.0
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : Architecture:		amd64
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : Java Home:		C:\Program Files\Java\jdk1.8.0_121\jre
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : JVM Version:		1.8.0_121-b13
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server lambda$logJVM$0
+INFO : JVM Vendor:		Oracle Corporation
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Connector init
+INFO : Initializing ProtocolHandler [http-bio-18080]
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Connector init
+INFO : Initializing ProtocolHandler [http-bio-18081]
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Connector init
+INFO : Initializing ProtocolHandler [http-bio-18082]
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Service init
+INFO : Initialization processed in 2 ms
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Connector start
+INFO : Starting ProtocolHandler [http-bio-18080]
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Connector start
+INFO : Starting ProtocolHandler [http-bio-18081]
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Connector start
+INFO : Starting ProtocolHandler [http-bio-18082]
+09 01, 2020 16:51:55 下午 cn.how2j.diytomcat.catalina.Server start
+INFO : Server startup in 11 ms
+09 01, 2020 16:52:03 下午 cn.how2j.diytomcat.catalina.HttpProcessor error
+ERROR: this is a deliberately created exception
+java.lang.RuntimeException: this is a deliberately created exception
+	at cn.how2j.diytomcat.servlets.DefaultServlet.service(DefaultServlet.java:39)
+	at cn.how2j.diytomcat.catalina.HttpProcessor.excute(HttpProcessor.java:30)
+	at cn.how2j.diytomcat.catalina.Connector$1.run(Connector.java:41)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
