@@ -11,6 +11,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -58,7 +59,7 @@ public class Request extends BaseRequest {
     private Map<String, String[]> parameterMap;
 
     private Map<String, String> headerMap;
-
+    private Cookie[] cookies;
     @Override
     public String getMethod() {
         return method;
@@ -82,6 +83,7 @@ public class Request extends BaseRequest {
         }
         parseParameters();
         parseHeaders();
+        parseCookies();
     }
 
     private void parseContext() {
@@ -284,7 +286,30 @@ public class Request extends BaseRequest {
 
         return url;
     }
+
     public String getServletPath() {
         return uri;
+    }
+
+    public Cookie[] getCookies() {
+        return cookies;
+    }
+
+    public void parseCookies() {
+        List<Cookie> cookieList = new ArrayList<>();
+        String cookies = headerMap.get("cookie");
+        if (null != cookies) {
+            String[] pairs = cookies.split(",");
+            for (String pair : pairs) {
+                if (StrUtil.isEmpty(pair))
+                    continue;
+                String[] segs = StrUtil.split(pair, "=");
+                String name = segs[0].trim();
+                String value = segs[1].trim();
+                Cookie cookie = new Cookie(name, value);
+                cookieList.add(cookie);
+            }
+        }
+        this.cookies = ArrayUtil.toArray(cookieList, Cookie.class);
     }
 }

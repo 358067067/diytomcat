@@ -3,12 +3,17 @@ package cn.how2j.diytomcat.test;
 import cn.how2j.diytomcat.util.MiniBrowser;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -146,6 +151,19 @@ public class TestTomcat {
     public void testsetCookie() {
         String html = getHttpString("/javaweb/setCookie");
         containAssert(html,"Set-Cookie: name=Gareen(cookie); Expires=");
+    }
+
+
+    @Test
+    public void testgetCookie() throws IOException {
+        String url = StrUtil.format("http://{}:{}{}", ip,port,"/javaweb/getCookie");
+        URL u = new URL(url);
+        HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+        conn.setRequestProperty("Cookie","name=Gareen(cookie)");
+        conn.connect();
+        InputStream is = conn.getInputStream();
+        String html = IoUtil.read(is, "utf-8");
+        containAssert(html,"name:Gareen(cookie)");
     }
 
     private byte[] getContentBytes(String uri) {
