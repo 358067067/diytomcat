@@ -5,10 +5,12 @@ import cn.how2j.diytomcat.http.Response;
 import cn.how2j.diytomcat.servlets.DefaultServlet;
 import cn.how2j.diytomcat.servlets.InvokerServlet;
 import cn.how2j.diytomcat.util.Constant;
+import cn.how2j.diytomcat.util.SessionManager;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.LogFactory;
 
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -19,8 +21,7 @@ public class HttpProcessor {
             String uri = request.getUri();
             if (null == uri)
                 return;
-            System.out.println("uri:" + uri);
-
+            prepareSession(request, response);
             Context context = request.getContext();
             String servletClassName = context.getServletClassName(uri);
 
@@ -41,6 +42,12 @@ public class HttpProcessor {
             LogFactory.get().error(e);
             handle500(s, e);
         }
+    }
+
+    public void prepareSession(Request request, Response response) {
+        String jsessionid = request.getJSessionIdFromCookie();
+        HttpSession session = SessionManager.getSession(jsessionid, request, response);
+        request.setSession(session);
     }
 
     private static void handle200(Socket s, Response response) throws IOException {

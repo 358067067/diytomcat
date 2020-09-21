@@ -12,6 +12,7 @@ import cn.hutool.core.util.URLUtil;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -60,6 +61,17 @@ public class Request extends BaseRequest {
 
     private Map<String, String> headerMap;
     private Cookie[] cookies;
+    private HttpSession session;
+
+    @Override
+    public HttpSession getSession() {
+        return session;
+    }
+
+    public void setSession(HttpSession session) {
+        this.session = session;
+    }
+
     @Override
     public String getMethod() {
         return method;
@@ -311,5 +323,15 @@ public class Request extends BaseRequest {
             }
         }
         this.cookies = ArrayUtil.toArray(cookieList, Cookie.class);
+    }
+
+    public String getJSessionIdFromCookie() {
+        if (null == cookies)
+            return null;
+        for (Cookie cookie : cookies) {
+            if ("JSESSIONID".equals(cookie.getName()))
+                return cookie.getValue();
+        }
+        return null;
     }
 }
