@@ -4,6 +4,7 @@ import cn.how2j.diytomcat.catalina.Context;
 import cn.how2j.diytomcat.catalina.Engine;
 import cn.how2j.diytomcat.catalina.Service;
 import cn.how2j.diytomcat.util.MiniBrowser;
+import cn.how2j.diytomcat.catalina.*;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -40,8 +41,11 @@ public class Request extends BaseRequest {
     private String method;
     private String uri;
     private Socket socket;
-    private Service service;
+    private Connector connector;
 
+    public Connector getConnector() {
+        return connector;
+    }
     public int getStatus() {
         return status;
     }
@@ -77,8 +81,8 @@ public class Request extends BaseRequest {
         return method;
     }
 
-    public Request(Socket socket, Service service) throws IOException {
-        this.service = service;
+    public Request(Socket socket, Connector connector) throws IOException {
+        this.connector = connector;
         this.socket = socket;
         this.parameterMap = new HashMap();
         this.headerMap = new HashMap<>();
@@ -99,6 +103,7 @@ public class Request extends BaseRequest {
     }
 
     private void parseContext() {
+        Service service = connector.getService();
         Engine engine = service.getEngine();
         context = engine.getDefaultHost().getContext(uri);
         if (null != context)
