@@ -4,6 +4,7 @@ import cn.how2j.diytomcat.http.Request;
 import cn.how2j.diytomcat.http.Response;
 import cn.how2j.diytomcat.servlets.DefaultServlet;
 import cn.how2j.diytomcat.servlets.InvokerServlet;
+import cn.how2j.diytomcat.servlets.JspServlet;
 import cn.how2j.diytomcat.util.Constant;
 import cn.how2j.diytomcat.util.SessionManager;
 import cn.hutool.core.util.ArrayUtil;
@@ -28,6 +29,8 @@ public class HttpProcessor {
 
             if (null != servletClassName)
                 InvokerServlet.getInstance().service(request, response);
+            else if (uri.endsWith(".jsp"))
+                JspServlet.getInstance().service(request, response);
             else
                 DefaultServlet.getInstance().service(request, response);
 

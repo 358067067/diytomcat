@@ -66,7 +66,7 @@ public class ServerXMLUtil {
         es.forEach(e -> {
             int port = Convert.toInt(e.attr("port"));
             String compression = e.attr("compression");
-            int compressionMinSize = Convert.toInt(e.attr("noCompressionUserAgents"));
+            int compressionMinSize = Convert.toInt(e.attr("compressionMinSize"), 0);
             String noCompressionUserAgents = e.attr("noCompressionUserAgents");
             String compressableMimeType = e.attr("compressableMimeType");
 
