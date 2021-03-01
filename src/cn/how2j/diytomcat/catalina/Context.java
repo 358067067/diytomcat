@@ -11,6 +11,8 @@ import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.LogFactory;
+import org.apache.jasper.JspC;
+import org.apache.jasper.compiler.JspRuntimeContext;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -83,6 +85,8 @@ public class Context {
             contextFileChangeWatcher = new ContextFileChangeWatcher(this);
             contextFileChangeWatcher.start();
         }
+        JspC c = new JspC();
+        new JspRuntimeContext(servletContext, c);
     }
 
     private void init() {
@@ -274,5 +278,9 @@ public class Context {
                 e.printStackTrace();
             }
         }
+    }
+
+    public WebappClassLoader getWebClassLoader() {
+        return webappClassLoader;
     }
 }

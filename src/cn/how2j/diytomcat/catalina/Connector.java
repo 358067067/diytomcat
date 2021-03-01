@@ -68,24 +68,21 @@ public class Connector implements Runnable {
 
             while(true) {
                 Socket s =  ss.accept();
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Request request = new Request(s, Connector.this);
-                            Response response = new Response();
-                            HttpProcessor processor = new HttpProcessor();
-                            processor.execute(s, request, response);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } finally {
-                            if (!s.isClosed())
-                                try {
-                                    s.close();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                        }
+                Runnable r = () -> {
+                    try {
+                        Request request = new Request(s, Connector.this);
+                        Response response = new Response();
+                        HttpProcessor processor = new HttpProcessor();
+                        processor.execute(s, request, response);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (!s.isClosed())
+                            try {
+                                s.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                     }
                 };
                 ThreadPoolUtil.run(r);

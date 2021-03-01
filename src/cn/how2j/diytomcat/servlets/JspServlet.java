@@ -1,8 +1,11 @@
 package cn.how2j.diytomcat.servlets;
 
+import cn.how2j.diytomcat.catalina.Context;
+import cn.how2j.diytomcat.classloader.JspClassLoader;
 import cn.how2j.diytomcat.http.Request;
 import cn.how2j.diytomcat.http.Response;
 import cn.how2j.diytomcat.util.Constant;
+import cn.how2j.diytomcat.util.JspUtil;
 import cn.how2j.diytomcat.util.WebXMLUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
@@ -36,16 +39,39 @@ public class JspServlet extends HttpServlet {
 
             if ("/".equals(uri))
                 uri = WebXMLUtil.getWelcomeFile(request.getContext());
+
             String fileName = StrUtil.removePrefix(uri, "/");
             File file = FileUtil.file(request.getRealPath(fileName));
+            // jsp文件是否存在
+            File jspFile = file;
+            if (jspFile.exists()) {
+                Context context = request.getContext();
+                String path = context.getPath();
+                String subFolder;
+                if ("/".equals(path))
+                    subFolder = "_";
+                else
+                    subFolder = StrUtil.subAfter(path, "/", false);
+                String servletClassPath = JspUtil.getServletClassPath(uri, subFolder);
+                // class文件是否存在
+                File jspServletClassFile = new File(servletClassPath);
+                if (jspServletClassFile.exists()) {
+                    JspUtil.compileJsp(context, jspFile);
+                } else if (jspFile.lastModified() > jspServletClassFile.lastModified()) {// 判断jsp文件和class文件的日期
+                    JspUtil.compileJsp(context, jspFile);
+                    JspClassLoader.invalidJspClassLoader(uri, context);
+                }
 
-            if (file.exists()) {
                 String extName = FileUtil.extName(file);
                 String mimeType = WebXMLUtil.getMimeType(extName);
                 response.setContentType(mimeType);
 
-                byte body[] = FileUtil.readBytes(file);
-                response.setBody(body);
+                JspClassLoader jspClassLoader = JspClassLoader.getJspClassLoader(uri, context);
+                String jspServletClassName = JspUtil.getJspServletClassName(uri, subFolder);
+                Class jspServletClass = jspClassLoader.loadClass(jspServletClassName);
+
+                HttpServlet servlet = context.getServlet(jspServletClass);
+                servlet.service(req, res);
 
                 response.setStatus(Constant.CODE_200);
             } else {
