@@ -5,6 +5,7 @@ import cn.how2j.diytomcat.http.Request;
 import cn.how2j.diytomcat.http.Response;
 import cn.how2j.diytomcat.util.Constant;
 import cn.hutool.core.util.ReflectUtil;
+import org.apache.tomcat.util.bcel.Const;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -36,8 +37,11 @@ public class InvokerServlet extends HttpServlet {
             Class servletClass = context.getWebappClassLoader().loadClass(servletClassName);
             Object servletObject = context.getServlet(servletClass);
             ReflectUtil.invoke(servletObject, "service", request, response);
-            response.setStatus(Constant.CODE_200);
 
+            if (null == response.getRedirectPath())
+                response.setStatus(Constant.CODE_200);
+            else
+                response.setStatus(Constant.CODE_302);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

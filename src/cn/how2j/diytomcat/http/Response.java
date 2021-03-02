@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 
 import javax.servlet.http.Cookie;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -18,7 +19,7 @@ public class Response extends BaseResponse {
     private PrintWriter writer;
     private String contentType;
     private byte[] body;
-
+    private String redirectPath;
     private List<Cookie> cookies;
 
     public int getStatus() {
@@ -70,6 +71,14 @@ public class Response extends BaseResponse {
         return this.cookies;
     }
 
+    public String getRedirectPath() {
+        return this.redirectPath;
+    }
+
+    public void sendRedirect(String redirect) throws IOException {
+        this.redirectPath = redirect;
+    }
+
     public String getCookiesHeader() {
         if (null == cookies)
             return "";
@@ -79,7 +88,7 @@ public class Response extends BaseResponse {
         for (Cookie cookie : cookies) {
             sb.append("\r\n");
             sb.append("Set-Cookie: ");
-            sb.append(cookie.getName() + "=" + cookie.getValue()+"; ");
+            sb.append(cookie.getName() + "=" + cookie.getValue() + "; ");
             if (-1 != cookie.getMaxAge()) {
                 sb.append("Expires=");
                 Date now = new Date();

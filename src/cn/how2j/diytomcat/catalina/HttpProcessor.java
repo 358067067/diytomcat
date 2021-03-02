@@ -42,6 +42,10 @@ public class HttpProcessor {
                 handle404(s, uri);
                 return;
             }
+            if(Constant.CODE_302 == response.getStatus()){
+                handle302(s, response);
+                return;
+            }
         } catch (Exception e) {
             LogFactory.get().error(e);
             handle500(s, e);
@@ -121,9 +125,18 @@ public class HttpProcessor {
         }
     }
 
+    protected void handle302(Socket s, Response response) throws IOException {
+        OutputStream os = s.getOutputStream();
+        String redirectPath = response.getRedirectPath();
+        String head_text = Constant.response_head_302;
+        String header = StrUtil.format(head_text, redirectPath);
+        byte[] bytes = header.getBytes("utf-8");
+        os.write(bytes);
+    }
+
     private boolean isGzip(Request request, byte[] body, String mimeType) {
-        String acceptEncodings=  request.getHeader("Accept-Encoding");
-        if(!StrUtil.containsAny(acceptEncodings, "gzip"))
+        String acceptEncodings = request.getHeader("Accept-Encoding");
+        if (!StrUtil.containsAny(acceptEncodings, "gzip"))
             return false;
 
 
